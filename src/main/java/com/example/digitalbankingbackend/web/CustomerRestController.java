@@ -1,9 +1,10 @@
 package com.example.digitalbankingbackend.web;
 
 import com.example.digitalbankingbackend.dtos.CustomerDTO;
+import com.example.digitalbankingbackend.dtos.BankAccountDTO;
 import com.example.digitalbankingbackend.exceptions.CustomerNotFoundException;
 import com.example.digitalbankingbackend.services.BankAccountService;
-import jakarta.validation.Valid; 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,10 +14,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/customers") 
+@RequestMapping("/api/v1/customers")
 @AllArgsConstructor
 @Slf4j
-@CrossOrigin("*") 
+@CrossOrigin("*")
 public class CustomerRestController {
 
     private final BankAccountService bankAccountService;
@@ -62,5 +63,12 @@ public class CustomerRestController {
         log.info("REST request to delete customer with ID: {}", id);
         bankAccountService.deleteCustomer(id);
         return ResponseEntity.noContent().build(); 
+    }
+
+    @GetMapping("/{customerId}/accounts")
+    public ResponseEntity<List<BankAccountDTO>> getCustomerAccounts(@PathVariable Long customerId) throws CustomerNotFoundException {
+        log.info("REST request to get accounts for customer ID: {}", customerId);
+        List<BankAccountDTO> accounts = bankAccountService.getAccountsByCustomerId(customerId);
+        return ResponseEntity.ok(accounts);
     }
 }

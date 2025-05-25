@@ -325,4 +325,32 @@ public class BankAccountServiceImpl implements BankAccountService {
 
         return accountHistoryDTO;
     }
+
+    @Override
+    public List<BankAccountDTO> getAccountsByCustomerId(Long customerId) throws CustomerNotFoundException {
+        log.info("Fetching bank accounts for customer ID: {}", customerId);
+        
+        // Check if customer exists
+        if (!customerRepository.existsById(customerId)) {
+            throw new CustomerNotFoundException("Customer not found with ID: " + customerId);
+        }
+        
+        // Get accounts for this customer
+        List<BankAccount> accounts = bankAccountRepository.findByCustomerId(customerId);
+        
+        // Convert to DTOs and return
+        return accounts.stream()
+            .map(bankAccount -> {
+                if (bankAccount instanceof SavingAccount sa) {
+                    return dtoMapper.fromSavingBankAccount(sa);
+                } else if (bankAccount instanceof CurrentAccount ca) {
+                    return dtoMapper.fromCurrentBankAccount(ca);
+                }
+                
+                log.warn("Encountered an unexpected BankAccount subtype: {}", bankAccount.getClass().getName());
+                return null;
+            })
+            .filter(java.util.Objects::nonNull)
+            .collect(Collectors.toList());
+    }
 }

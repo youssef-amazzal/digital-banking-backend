@@ -23,6 +23,7 @@ public interface BankAccountService {
     BankAccountDTO getBankAccount(String accountId) throws BankAccountNotFoundException;
     List<BankAccountDTO> bankAccountList();
     List<BankAccountDTO> bankAccountList(boolean includeInactive);
+    List<BankAccountDTO> getAccountsByCustomerId(Long customerId) throws CustomerNotFoundException;
 
     // Account operations
     void debit(String accountId, double amount, String description) throws BankAccountNotFoundException, BalanceNotSufficientException, BankAccountActionNotAllowedException;
