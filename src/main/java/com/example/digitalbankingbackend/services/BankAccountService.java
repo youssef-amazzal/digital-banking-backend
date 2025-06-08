@@ -1,6 +1,7 @@
 package com.example.digitalbankingbackend.services;
 
 import com.example.digitalbankingbackend.dtos.*;
+import com.example.digitalbankingbackend.enums.AccountStatus;
 import com.example.digitalbankingbackend.exceptions.BalanceNotSufficientException;
 import com.example.digitalbankingbackend.exceptions.BankAccountActionNotAllowedException;
 import com.example.digitalbankingbackend.exceptions.BankAccountNotFoundException;
@@ -24,6 +25,7 @@ public interface BankAccountService {
     List<BankAccountDTO> bankAccountList();
     List<BankAccountDTO> bankAccountList(boolean includeInactive);
     List<BankAccountDTO> getAccountsByCustomerId(Long customerId) throws CustomerNotFoundException;
+    BankAccountDTO changeAccountStatus(String accountId, AccountStatus status) throws BankAccountNotFoundException;
 
     // Account operations
     void debit(String accountId, double amount, String description) throws BankAccountNotFoundException, BalanceNotSufficientException, BankAccountActionNotAllowedException;

@@ -66,12 +66,10 @@ public class BankAccountServiceImpl implements BankAccountService {
 
         if (customerBankAccounts != null && !customerBankAccounts.isEmpty()) {
             log.info("Soft deleting {} bank accounts for customer ID: {}", customerBankAccounts.size(), customerId);
-            // Set accounts to suspended and remove customer reference to avoid TransientObjectException
             for (BankAccount account : customerBankAccounts) {
                 account.setStatus(AccountStatus.SUSPENDED);
                 account.setCustomer(null);
             }
-            // Save all accounts with null customer reference
             bankAccountRepository.saveAllAndFlush(customerBankAccounts);
         } else {
             log.info("No bank accounts found for customer ID: {} to soft delete.", customerId);
@@ -163,6 +161,31 @@ public class BankAccountServiceImpl implements BankAccountService {
             return dtoMapper.fromCurrentBankAccount(currentAccount);
         } else {
 
+            log.error("Unknown BankAccount subtype encountered for ID: {}", accountId);
+            throw new BankAccountNotFoundException("Unknown BankAccount type for ID: " + accountId);
+        }
+    }    @Override
+    public BankAccountDTO changeAccountStatus(String accountId, AccountStatus status) throws BankAccountNotFoundException {
+        log.info("Changing account status for ID: {} to {}", accountId, status);
+        
+        BankAccount bankAccount = bankAccountRepository.findById(accountId)
+                .orElseThrow(() -> new BankAccountNotFoundException("BankAccount not found with ID: " + accountId));
+        
+        AccountStatus oldStatus = bankAccount.getStatus();
+        
+        validateStatusTransition(oldStatus, status);
+        
+        bankAccount.setStatus(status);
+        bankAccountRepository.save(bankAccount);
+        
+        log.info("Account {} status changed from {} to {}", accountId, oldStatus, status);
+        
+        // Return the updated account DTO
+        if (bankAccount instanceof SavingAccount savingAccount) {
+            return dtoMapper.fromSavingBankAccount(savingAccount);
+        } else if (bankAccount instanceof CurrentAccount currentAccount) {
+            return dtoMapper.fromCurrentBankAccount(currentAccount);
+        } else {
             log.error("Unknown BankAccount subtype encountered for ID: {}", accountId);
             throw new BankAccountNotFoundException("Unknown BankAccount type for ID: " + accountId);
         }
@@ -349,5 +372,37 @@ public class BankAccountServiceImpl implements BankAccountService {
             })
             .filter(java.util.Objects::nonNull)
             .collect(Collectors.toList());
+    }
+
+    private void validateStatusTransition(AccountStatus fromStatus, AccountStatus toStatus) {
+        // Same status - no change needed
+        if (fromStatus == toStatus) {
+            throw new IllegalArgumentException("Account is already in " + toStatus + " status");
+        }
+        
+        boolean isValidTransition = switch (fromStatus) {
+            case CREATED -> {
+                // From CREATED: Can only activate or close (if never activated)
+                yield toStatus == AccountStatus.ACTIVATED || toStatus == AccountStatus.CLOSED;
+            }
+            case ACTIVATED -> {
+                // From ACTIVATED: Can suspend or close
+                yield toStatus == AccountStatus.SUSPENDED || toStatus == AccountStatus.CLOSED;
+            }
+            case SUSPENDED -> {
+                // From SUSPENDED: Can reactivate or close
+                yield toStatus == AccountStatus.ACTIVATED || toStatus == AccountStatus.CLOSED;
+            }
+            case CLOSED -> {
+                // From CLOSED: No transitions allowed (permanent state)
+                yield false;
+            }
+        };
+        
+        if (!isValidTransition) {
+            throw new IllegalArgumentException(
+                String.format("Invalid status transition: Cannot change from %s to %s", fromStatus, toStatus)
+            );
+        }
     }
 }

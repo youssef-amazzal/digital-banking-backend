@@ -1,6 +1,7 @@
 package com.example.digitalbankingbackend.web;
 
 import com.example.digitalbankingbackend.dtos.*;
+import com.example.digitalbankingbackend.enums.AccountStatus;
 import com.example.digitalbankingbackend.exceptions.BalanceNotSufficientException;
 import com.example.digitalbankingbackend.exceptions.BankAccountActionNotAllowedException;
 import com.example.digitalbankingbackend.exceptions.BankAccountNotFoundException;
@@ -109,5 +110,14 @@ public class BankAccountRestController {
                 transferRequestDTO.accountDestination(),
                 transferRequestDTO.amount());
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{accountId}/status")
+    public ResponseEntity<BankAccountDTO> changeAccountStatus(
+            @PathVariable String accountId,
+            @RequestParam AccountStatus status) throws BankAccountNotFoundException {
+        log.info("REST request to change status of account {} to {}", accountId, status);
+        BankAccountDTO updatedAccount = bankAccountService.changeAccountStatus(accountId, status);
+        return ResponseEntity.ok(updatedAccount);
     }
 }
