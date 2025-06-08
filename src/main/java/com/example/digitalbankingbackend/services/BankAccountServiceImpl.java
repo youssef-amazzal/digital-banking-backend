@@ -56,10 +56,7 @@ public class BankAccountServiceImpl implements BankAccountService {
 
         Customer updatedCustomer = customerRepository.save(existingCustomer);
         return dtoMapper.fromCustomer(updatedCustomer);
-    }
-
-
-    @Override
+    }    @Override
     public void deleteCustomer(Long customerId) throws CustomerNotFoundException {
         log.warn("Attempting to delete Customer ID: {}", customerId);
         Customer customer = customerRepository.findById(customerId)
@@ -69,19 +66,19 @@ public class BankAccountServiceImpl implements BankAccountService {
 
         if (customerBankAccounts != null && !customerBankAccounts.isEmpty()) {
             log.info("Soft deleting {} bank accounts for customer ID: {}", customerBankAccounts.size(), customerId);
+            // Set accounts to suspended and remove customer reference to avoid TransientObjectException
             for (BankAccount account : customerBankAccounts) {
                 account.setStatus(AccountStatus.SUSPENDED);
-
-                bankAccountRepository.save(account);
+                account.setCustomer(null);
             }
+            // Save all accounts with null customer reference
+            bankAccountRepository.saveAllAndFlush(customerBankAccounts);
         } else {
             log.info("No bank accounts found for customer ID: {} to soft delete.", customerId);
         }
 
         log.info("Physically deleting customer record for ID: {}", customerId);
         customerRepository.delete(customer);
-
-
     }
 
     private AccountStatus determineInitialAccountStatus(Customer customer) {
