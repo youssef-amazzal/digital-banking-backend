@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -15,6 +16,7 @@ public class Customer {
     private Long id;
     private String name;
     private String email;
+    private Date createdAt;
 
     @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
     @ToString.Exclude

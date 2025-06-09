@@ -34,12 +34,11 @@ public class BankAccountServiceImpl implements BankAccountService {
     private final CustomerRepository customerRepository;
     private final BankAccountRepository bankAccountRepository;
     private final AccountOperationRepository accountOperationRepository;
-    private final BankAccountMapper dtoMapper;
-
-    @Override
+    private final BankAccountMapper dtoMapper;    @Override
     public CustomerDTO saveCustomer(CustomerDTO customerDTO) {
         log.info("Saving new Customer: {}", customerDTO.getName());
         Customer customer = dtoMapper.fromCustomerDTO(customerDTO);
+        customer.setCreatedAt(new Date()); // Set creation date for new customers
         Customer savedCustomer = customerRepository.save(customer);
         return dtoMapper.fromCustomer(savedCustomer);
     }
