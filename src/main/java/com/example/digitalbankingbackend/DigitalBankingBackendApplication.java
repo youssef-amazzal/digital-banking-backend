@@ -3,14 +3,16 @@ package com.example.digitalbankingbackend;
 import com.example.digitalbankingbackend.entities.*;
 import com.example.digitalbankingbackend.enums.AccountStatus;
 import com.example.digitalbankingbackend.enums.OperationType;
+import com.example.digitalbankingbackend.enums.Role;
 import com.example.digitalbankingbackend.repositories.AccountOperationRepository;
 import com.example.digitalbankingbackend.repositories.BankAccountRepository;
 import com.example.digitalbankingbackend.repositories.CustomerRepository;
+import com.example.digitalbankingbackend.repositories.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -22,11 +24,50 @@ public class DigitalBankingBackendApplication {
     public static void main(String[] args) {
         SpringApplication.run(DigitalBankingBackendApplication.class, args);
     }
-    
-    @Bean
+      @Bean
     CommandLineRunner start(CustomerRepository customerRepository,
                             BankAccountRepository bankAccountRepository,
-                            AccountOperationRepository accountOperationRepository) {        return args -> {
+                            AccountOperationRepository accountOperationRepository,
+                            UserRepository userRepository,
+                            PasswordEncoder passwordEncoder) {        return args -> {
+            // Create default users
+            if (userRepository.count() == 0) {
+                // Create admin user
+                User admin = new User();
+                admin.setUsername("admin");
+                admin.setEmail("admin@digitalbank.com");
+                admin.setPassword(passwordEncoder.encode("admin123"));
+                admin.setFirstName("Admin");
+                admin.setLastName("User");
+                admin.setRole(Role.ADMIN);
+                userRepository.save(admin);
+                
+                // Create manager user
+                User manager = new User();
+                manager.setUsername("manager");
+                manager.setEmail("manager@digitalbank.com");
+                manager.setPassword(passwordEncoder.encode("manager123"));
+                manager.setFirstName("Manager");
+                manager.setLastName("User");
+                manager.setRole(Role.MANAGER);
+                userRepository.save(manager);
+                
+                // Create regular user
+                User user = new User();
+                user.setUsername("user");
+                user.setEmail("user@digitalbank.com");
+                user.setPassword(passwordEncoder.encode("user123"));
+                user.setFirstName("Regular");
+                user.setLastName("User");
+                user.setRole(Role.USER);
+                userRepository.save(user);
+                
+                System.out.println("--- Default Users Created ---");
+                System.out.println("Admin: admin/admin123");
+                System.out.println("Manager: manager/manager123");
+                System.out.println("User: user/user123");
+            }
+            
             // Create Customers with historical creation dates
             Calendar cal = Calendar.getInstance();
             String[] customerNames = {"Hassan", "Imane", "Mohamed"};
