@@ -59,18 +59,16 @@ public class SecurityConfig {
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> 
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))                .authorizeHttpRequests(auth -> 
                     auth.requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/v1/customers/**").hasAnyRole("USER", "ADMIN", "MANAGER")
                         .requestMatchers("/api/v1/accounts/**").hasAnyRole("USER", "ADMIN", "MANAGER")
                         .anyRequest().authenticated()
-                );
-        
-        // Fix H2 Console frame options
-        http.headers(headers -> headers.frameOptions().disable());
+                );        // Fix H2 Console frame options
+        http.headers(headers -> headers
+                .frameOptions(frameOptions -> frameOptions.sameOrigin()));
         
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
